@@ -218,10 +218,12 @@ namespace YoutubeIPv6BlockForVRChat
             var targetProcessName = "start_protected_game";
             try
             {
-                if (Process.GetProcessesByName(targetProcessName).Length != 0)
+                var procs = Process.GetProcessesByName(targetProcessName);
+                var proc = procs.FirstOrDefault();
+                if (proc != null && proc.MainModule != null)
                 {
-                    var processFilePath = Process.GetProcessesByName(targetProcessName)[0].MainModule.FileName;
-                    var parentDirName = Directory.GetParent(processFilePath).Name;
+                    var processFilePath = proc.MainModule.FileName;
+                    var parentDirName = Directory.GetParent(processFilePath)?.Name;
                     if (parentDirName == "VRChat")
                     {
                         return true;
@@ -256,6 +258,11 @@ namespace YoutubeIPv6BlockForVRChat
             psInfo.RedirectStandardError = true;  // 標準エラー出力をリダイレクト
 
             var p = Process.Start(psInfo);
+            if (p == null)
+            {
+                throw new InvalidOperationException("PowerShell プロセスの開始に失敗しました。");
+            }
+
             var Result = p.StandardOutput.ReadToEnd();   // 標準出力の読み取り
             return Result;
         }
