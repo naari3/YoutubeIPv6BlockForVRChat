@@ -35,21 +35,11 @@ namespace YoutubeIPv6BlockForVRChat
 
         private void buttonBlock_Click(object sender, EventArgs e)
         {
-            if (IsVRCRunning())
-            {
-                MessageBox.Show("VRChat‹N“®’†‚Í‘€ì‚Å‚«‚Ü‚¹‚ñ", Properties.Resources.AppName);
-                return;
-            }
             ExecuteBlock();
         }
 
         private void buttonUnblock_Click(object sender, EventArgs e)
         {
-            if (IsVRCRunning())
-            {
-                MessageBox.Show("VRChat‹N“®’†‚Í‘€ì‚Å‚«‚Ü‚¹‚ñ", Properties.Resources.AppName);
-                return;
-            }
             ExecuteUnblock();
         }
 
@@ -164,12 +154,6 @@ namespace YoutubeIPv6BlockForVRChat
 
         private void IPv6Block_Click(object sender, EventArgs e)
         {
-            if (IsVRCRunning())
-            {
-                MessageBox.Show("VRChat‹N“®’†‚Í‘€ì‚Å‚«‚Ü‚¹‚ñ", Properties.Resources.AppName);
-                return;
-            }
-
             if (IPv6Block.Checked)
             {
                 buttonUnblock_Click(sender, e);
