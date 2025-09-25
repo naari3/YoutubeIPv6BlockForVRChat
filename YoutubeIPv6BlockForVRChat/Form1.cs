@@ -143,7 +143,7 @@ namespace YoutubeIPv6BlockForVRChat
         private void CreateFirewallRule()
         {
             Debug.WriteLine("Create FirewallRule");
-            ExecutePowerShellCommand($"New-NetFirewallRule -DisplayName \"{Properties.Resources.AppName}\" -Direction Outbound -Action Block -RemoteAddress \"2404:6800::/32\" -Profile Any -Protocol Any -Enabled True");
+            ExecutePowerShellCommand($"New-NetFirewallRule -DisplayName \"{Properties.Resources.AppName}\" -Direction Outbound -Action Block -RemoteAddress \"2404:6800::/32\", \"2001:4860:4000::/36\", \"2607:f8b0:4000::/36\", \"2800:3f0:4000::/36\", \"2a00:1450:4000::/36\", \"2c0f:fb50:4000::/36\" -Profile Any -Protocol Any -Enabled True");
         }
 
         private void DeleteFirewallRule()

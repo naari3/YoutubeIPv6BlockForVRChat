@@ -149,7 +149,7 @@
             label1.Name = "label1";
             label1.Size = new Size(34, 15);
             label1.TabIndex = 5;
-            label1.Text = "v1.01";
+            label1.Text = "v1.02";
             // 
             // timerCheckVRCInitializing
             // 
