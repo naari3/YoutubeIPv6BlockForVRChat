@@ -1,5 +1,7 @@
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
+using System.Net;
+using System.Text.Json;
 
 
 namespace YoutubeIPv6BlockForVRChat
@@ -17,16 +19,16 @@ namespace YoutubeIPv6BlockForVRChat
             Debug.WriteLine("App Init Start");
             WindowState = FormWindowState.Minimized;
 
-            //écë∂ÉtÉ@ÉCÉAÉEÉHÅ[ÉãÉãÅ[ÉãÇÃÉNÉäÅ[ÉìÉAÉbÉv
+            //ÊÆãÂ≠ò„Éï„Ç°„Ç§„Ç¢„Ç¶„Ç©„Éº„É´„É´„Éº„É´„ÅÆ„ÇØ„É™„Éº„É≥„Ç¢„ÉÉ„Éó
             DeleteFirewallRule();
 
-            //É^ÉXÉNóLñ≥ÇämîFÇµÅAÉ^ÉXÉNÇ™ìoò^çœÇ›ÇÃèÍçáÇÕÉXÉ^Å[ÉgÉAÉbÉvÇÃÉ`ÉFÉbÉNÉ{ÉbÉNÉXON
+            //„Çø„Çπ„ÇØÊúâÁÑ°„ÇíÁ¢∫Ë™ç„Åó„ÄÅ„Çø„Çπ„ÇØ„ÅåÁôªÈå≤Ê∏à„Åø„ÅÆÂ†¥Âêà„ÅØ„Çπ„Çø„Éº„Éà„Ç¢„ÉÉ„Éó„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Éú„ÉÉ„ÇØ„ÇπON
             if (IsTaskExist())
             {
                 checkBoxAutoStart.Checked = true;
             }
 
-            //VRCãNìÆäƒéã äJén
+            //VRCËµ∑ÂãïÁõ£Ë¶ñ ÈñãÂßã
             timerCheckVRCInitializing.Start();
 
             isInitializing = false;
@@ -125,10 +127,12 @@ namespace YoutubeIPv6BlockForVRChat
         private void ExecuteBlock()
         {
             Debug.WriteLine("Execute Block");
-            CreateFirewallRule();
-            buttonBlock.Enabled = false;
-            buttonUnblock.Enabled = true;
-            IPv6Block.Checked = true;
+            if (CreateFirewallRule())
+            {
+                buttonBlock.Enabled = false;
+                buttonUnblock.Enabled = true;
+                IPv6Block.Checked = true;
+            }
         }
 
         private void ExecuteUnblock()
@@ -140,10 +144,22 @@ namespace YoutubeIPv6BlockForVRChat
             IPv6Block.Checked = false;
         }
 
-        private void CreateFirewallRule()
+        private bool CreateFirewallRule()
         {
             Debug.WriteLine("Create FirewallRule");
-            ExecutePowerShellCommand($"New-NetFirewallRule -DisplayName \"{Properties.Resources.AppName}\" -Direction Outbound -Action Block -RemoteAddress \"2404:6800::/32\", \"2001:4860:4000::/36\", \"2607:f8b0:4000::/36\", \"2800:3f0:4000::/36\", \"2a00:1450:4000::/36\", \"2c0f:fb50:4000::/36\" -Profile Any -Protocol Any -Enabled True");
+            
+            var config = LoadNetblocksConfig();
+            if (config == null || config.GoogleIPv6Netblocks == null || config.GoogleIPv6Netblocks.Count == 0)
+            {
+                MessageBox.Show("Google DNS„ÅÆË®≠ÂÆö„ÅåË¶ã„Å§„Åã„Çä„Åæ„Åõ„Çì„ÄÇÂÖà„Å´„ÄåGoogle DNSÂèñÂæó„Äç„Éú„Çø„É≥„Çí„ÇØ„É™„ÉÉ„ÇØ„Åó„Å¶IPv6„Ç¢„Éâ„É¨„ÇπÁØÑÂõ≤„ÇíÂèñÂæó„Åó„Å¶„Åè„Å†„Åï„ÅÑ„ÄÇ", "„Ç®„É©„Éº", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            
+            var addresses = string.Join("\", \"", config.GoogleIPv6Netblocks);
+            ExecutePowerShellCommand($"New-NetFirewallRule -DisplayName \"{Properties.Resources.AppName}\" -Direction Outbound -Action Block -RemoteAddress \"{addresses}\" -Profile Any -Protocol Any -Enabled True");
+            
+            Debug.WriteLine($"Blocked addresses: {addresses}");
+            return true;
         }
 
         private void DeleteFirewallRule()
@@ -188,7 +204,7 @@ namespace YoutubeIPv6BlockForVRChat
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //écë∂ÉtÉ@ÉCÉAÉEÉHÅ[ÉãÉãÅ[ÉãÇÃÉNÉäÅ[ÉìÉAÉbÉv
+            //ÊÆãÂ≠ò„Éï„Ç°„Ç§„Ç¢„Ç¶„Ç©„Éº„É´„É´„Éº„É´„ÅÆ„ÇØ„É™„Éº„É≥„Ç¢„ÉÉ„Éó
             DeleteFirewallRule();
         }
 
@@ -238,17 +254,163 @@ namespace YoutubeIPv6BlockForVRChat
             psInfo.WindowStyle = ProcessWindowStyle.Hidden;
             psInfo.UseShellExecute = false;
             psInfo.Arguments = psCommandWithArgs;
-            psInfo.RedirectStandardOutput = true; // ïWèÄèoóÕÇÉäÉ_ÉCÉåÉNÉg
-            psInfo.RedirectStandardError = true;  // ïWèÄÉGÉâÅ[èoóÕÇÉäÉ_ÉCÉåÉNÉg
+            psInfo.RedirectStandardOutput = true; // Ê®ôÊ∫ñÂá∫Âäõ„Çí„É™„ÉÄ„Ç§„É¨„ÇØ„Éà
+            psInfo.RedirectStandardError = true;  // Ê®ôÊ∫ñ„Ç®„É©„ÉºÂá∫Âäõ„Çí„É™„ÉÄ„Ç§„É¨„ÇØ„Éà
 
             var p = Process.Start(psInfo);
             if (p == null)
             {
-                throw new InvalidOperationException("PowerShell ÉvÉçÉZÉXÇÃäJénÇ…é∏îsÇµÇ‹ÇµÇΩÅB");
+                throw new InvalidOperationException("PowerShell „Éó„É≠„Çª„Çπ„ÅÆÈñãÂßã„Å´Â§±Êïó„Åó„Åæ„Åó„Åü„ÄÇ");
             }
 
-            var Result = p.StandardOutput.ReadToEnd();   // ïWèÄèoóÕÇÃì«Ç›éÊÇË
+            var Result = p.StandardOutput.ReadToEnd();   // Ê®ôÊ∫ñÂá∫Âäõ„ÅÆË™≠„ÅøÂèñ„Çä 
             return Result;
+        }
+
+        private async void buttonFetchDNS_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                buttonFetchDNS.Enabled = false;
+                buttonFetchDNS.Text = "ÂèñÂæó‰∏≠...";
+                
+                var netblocks = await FetchGoogleNetblocks();
+                
+                if (netblocks != null && netblocks.Count > 0)
+                {
+                    SaveNetblocksConfig(netblocks);
+                    MessageBox.Show($"Google DNS„Åã„Çâ{netblocks.Count}ÂÄã„ÅÆIPv6„Ç¢„Éâ„É¨„ÇπÁØÑÂõ≤„ÇíÂèñÂæó„Åó„ÄÅË®≠ÂÆö„Éï„Ç°„Ç§„É´„Å´‰øùÂ≠ò„Åó„Åæ„Åó„Åü„ÄÇ", "ÊàêÂäü", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Google DNS„Åã„ÇâIPv6„Ç¢„Éâ„É¨„ÇπÁØÑÂõ≤„ÇíÂèñÂæó„Åß„Åç„Åæ„Åõ„Çì„Åß„Åó„Åü„ÄÇ", "„Ç®„É©„Éº", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"„Ç®„É©„Éº„ÅåÁô∫Áîü„Åó„Åæ„Åó„Åü: {ex.Message}", "„Ç®„É©„Éº", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                buttonFetchDNS.Enabled = true;
+                buttonFetchDNS.Text = "Google DNSÂèñÂæó";
+            }
+        }
+
+        private async System.Threading.Tasks.Task<List<string>> FetchGoogleNetblocks()
+        {
+            var netblocks = new List<string>();
+
+            var spfCommand = "nslookup -type=TXT _spf.google.com 8.8.8.8";
+            var spfResult = await System.Threading.Tasks.Task.Run(() => ExecutePowerShellCommand(spfCommand));
+
+            var netblockDomains = ExtractNetblockDomains(spfResult);
+
+            if (netblockDomains.Count == 0)
+            {
+                Debug.WriteLine("No netblock domains found in SPF record");
+                return netblocks;
+            }
+
+            foreach (var domain in netblockDomains)
+            {
+                var nslookupCommand = $"nslookup -type=TXT {domain} 8.8.8.8";
+                var result = await System.Threading.Tasks.Task.Run(() => ExecutePowerShellCommand(nslookupCommand));
+
+                var lines = result.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    if (line.Contains("ip6:"))
+                    {
+                        var matches = System.Text.RegularExpressions.Regex.Matches(line, @"ip6:([0-9a-fA-F:]+\/\d+)");
+                        foreach (System.Text.RegularExpressions.Match match in matches)
+                        {
+                            if (match.Success)
+                            {
+                                netblocks.Add(match.Groups[1].Value);
+                                Debug.WriteLine($"Found IPv6 block from {domain}: {match.Groups[1].Value}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            return netblocks.Distinct().ToList();
+        }
+
+        private List<string> ExtractNetblockDomains(string spfResult)
+        {
+            var domains = new List<string>();
+            var lines = spfResult.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var line in lines)
+            {
+                if (line.Contains("include:"))
+                {
+                    var matches = System.Text.RegularExpressions.Regex.Matches(line, @"include:(_netblocks\d*\.google\.com)");
+                    foreach (System.Text.RegularExpressions.Match match in matches)
+                    {
+                        if (match.Success)
+                        {
+                            domains.Add(match.Groups[1].Value);
+                            Debug.WriteLine($"Found netblock domain: {match.Groups[1].Value}");
+                        }
+                    }
+                }
+            }
+
+            return domains;
+        }
+
+        private void SaveNetblocksConfig(List<string> netblocks)
+        {
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var configDir = Path.Combine(appDataPath, "YoutubeIPv6BlockForVRChat");
+            
+            if (!Directory.Exists(configDir))
+            {
+                Directory.CreateDirectory(configDir);
+            }
+            
+            var configPath = Path.Combine(configDir, "config.json");
+            
+            var config = new
+            {
+                LastUpdated = DateTime.Now,
+                GoogleIPv6Netblocks = netblocks
+            };
+            
+            var jsonOptions = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            
+            var json = JsonSerializer.Serialize(config, jsonOptions);
+            File.WriteAllText(configPath, json);
+            
+            Debug.WriteLine($"Config saved to: {configPath}");
+        }
+
+        private NetblocksConfig? LoadNetblocksConfig()
+        {
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var configPath = Path.Combine(appDataPath, "YoutubeIPv6BlockForVRChat", "config.json");
+            
+            if (!File.Exists(configPath))
+            {
+                return null;
+            }
+            
+            try
+            {
+                var json = File.ReadAllText(configPath);
+                return JsonSerializer.Deserialize<NetblocksConfig>(json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to load config: {ex.Message}");
+                return null;
+            }
         }
     }
 }
