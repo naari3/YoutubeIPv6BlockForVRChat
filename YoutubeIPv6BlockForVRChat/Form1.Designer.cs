@@ -40,6 +40,7 @@
             checkBoxAutoStart = new CheckBox();
             buttonBlock = new Button();
             buttonUnblock = new Button();
+            buttonFetchDNS = new Button();
             groupBox1 = new GroupBox();
             timerCheckVRCRunning = new System.Windows.Forms.Timer(components);
             label1 = new Label();
@@ -126,6 +127,16 @@
             buttonUnblock.UseVisualStyleBackColor = true;
             buttonUnblock.Click += buttonUnblock_Click;
             // 
+            // buttonFetchDNS
+            // 
+            buttonFetchDNS.Location = new Point(197, 34);
+            buttonFetchDNS.Name = "buttonFetchDNS";
+            buttonFetchDNS.Size = new Size(131, 23);
+            buttonFetchDNS.TabIndex = 6;
+            buttonFetchDNS.Text = "Google DNS取得";
+            buttonFetchDNS.UseVisualStyleBackColor = true;
+            buttonFetchDNS.Click += buttonFetchDNS_Click;
+            // 
             // groupBox1
             // 
             groupBox1.Controls.Add(buttonBlock);
@@ -164,6 +175,7 @@
             Controls.Add(label1);
             Controls.Add(groupBox1);
             Controls.Add(checkBoxAutoStart);
+            Controls.Add(buttonFetchDNS);
             FormBorderStyle = FormBorderStyle.Fixed3D;
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
@@ -187,6 +199,7 @@
         private CheckBox checkBoxAutoStart;
         private Button buttonBlock;
         private Button buttonUnblock;
+        private Button buttonFetchDNS;
         private GroupBox groupBox1;
         private System.Windows.Forms.Timer timerCheckVRCRunning;
         private ToolStripSeparator toolStripSeparator1;
